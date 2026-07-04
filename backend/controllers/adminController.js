@@ -84,6 +84,11 @@ const addDoctor = async (req, res) => {
         const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
         const hashedPassword = await bcrypt.hash(password, salt)
 
+        const existingDoctor = await doctorModel.findOne({ email })
+        if (existingDoctor) {
+            return res.json({ success: false, message: 'Doctor already exists' })
+        }
+
         // upload image to cloudinary
         const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
         const imageUrl = imageUpload.secure_url
@@ -108,6 +113,9 @@ const addDoctor = async (req, res) => {
 
     } catch (error) {
         console.log(error)
+        if (error.code === 11000) {
+            return res.json({ success: false, message: 'Doctor already exists' })
+        }
         res.json({ success: false, message: error.message })
     }
 }
@@ -118,6 +126,22 @@ const allDoctors = async (req, res) => {
 
         const doctors = await doctorModel.find({}).select('-password')
         res.json({ success: true, doctors })
+
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// API to delete a doctor
+const deleteDoctor = async (req, res) => {
+    try {
+        const { doctorId } = req.body
+        if (!doctorId) return res.json({ success: false, message: 'Missing doctorId' })
+
+        await doctorModel.findByIdAndDelete(doctorId)
+
+        res.json({ success: true, message: 'Doctor deleted' })
 
     } catch (error) {
         console.log(error)
@@ -153,6 +177,8 @@ export {
     appointmentsAdmin,
     appointmentCancel,
     addDoctor,
+    // delete doctor
+    deleteDoctor,
     allDoctors,
     adminDashboard
 }

@@ -40,6 +40,11 @@ const registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
         const hashedPassword = await bcrypt.hash(password, salt)
 
+        const existingUser = await userModel.findOne({ email })
+        if (existingUser) {
+            return res.json({ success: false, message: 'User already exists' })
+        }
+
         const userData = {
             name,
             email,
@@ -54,6 +59,9 @@ const registerUser = async (req, res) => {
 
     } catch (error) {
         console.log(error)
+        if (error.code === 11000) {
+            return res.json({ success: false, message: 'User already exists' })
+        }
         res.json({ success: false, message: error.message })
     }
 }
