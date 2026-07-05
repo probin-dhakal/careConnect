@@ -81,13 +81,16 @@ const AdminContextProvider = (props) => {
             if (data.success) {
                 toast.success(data.message)
                 getAllAppointments()
+                return true
             } else {
                 toast.error(data.message)
+                return false
             }
 
         } catch (error) {
             toast.error(error.message)
             console.log(error)
+            return false
         }
 
     }

@@ -1,13 +1,19 @@
 import React from 'react'
-import { useContext, useEffect } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { DoctorContext } from '../../context/DoctorContext'
 import { AppContext } from '../../context/AppContext'
 import { assets } from '../../dashboardAssets/assets.js'
+import LogoutConfirmModal from '../../components/LogoutConfirmModal'
 
 const DoctorAppointments = () => {
 
   const { dToken, appointments, getAppointments, cancelAppointment, completeAppointment } = useContext(DoctorContext)
   const { slotDateFormat, calculateAge, currency } = useContext(AppContext)
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [pendingAction, setPendingAction] = useState(null)
+  const [pendingAppointmentId, setPendingAppointmentId] = useState(null)
 
   useEffect(() => {
     if (dToken) {
@@ -49,13 +55,26 @@ const DoctorAppointments = () => {
               : item.isCompleted
                 ? <p className='text-green-500 text-xs font-medium'>Completed</p>
                 : <div className='flex'>
-                  <img onClick={() => cancelAppointment(item._id)} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
-                  <img onClick={() => completeAppointment(item._id)} className='w-10 cursor-pointer' src={assets.tick_icon} alt="" />
+                  <img onClick={() => { setPendingAction('cancel'); setPendingAppointmentId(item._id); setConfirmOpen(true) }} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
+                  <img onClick={() => { setPendingAction('complete'); setPendingAppointmentId(item._id); setConfirmOpen(true) }} className='w-10 cursor-pointer' src={assets.tick_icon} alt="" />
                 </div>
             }
           </div>
         ))}
       </div>
+
+      <LogoutConfirmModal isOpen={confirmOpen} title={pendingAction==='cancel'?'Cancel Appointment':'Mark Completed'} message={pendingAction==='cancel'?'Are you sure you want to cancel this appointment?':'Mark this appointment as completed?'} onCancel={() => setConfirmOpen(false)} onConfirm={async()=>{
+        setConfirmLoading(true)
+        if(pendingAction==='cancel'){
+          await cancelAppointment(pendingAppointmentId)
+        } else if(pendingAction==='complete'){
+          await completeAppointment(pendingAppointmentId)
+        }
+        setConfirmLoading(false)
+        setConfirmOpen(false)
+        setPendingAction(null)
+        setPendingAppointmentId(null)
+      }} confirmLabel={pendingAction==='cancel'?'Yes, Cancel':'Yes, Complete'} loading={confirmLoading} />
 
     </div>
   )

@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import { sendMail } from "../config/mailer.js";
+import { appointmentCancelledTemplate, appointmentCompletedTemplate } from "../templates/emailTemplates.js";
 
 // API for doctor Login 
 const loginDoctor = async (req, res) => {
@@ -53,12 +55,18 @@ const appointmentCancel = async (req, res) => {
         const { docId, appointmentId } = req.body
 
         const appointmentData = await appointmentModel.findById(appointmentId)
-        if (appointmentData && appointmentData.docId === docId) {
-            await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
-            return res.json({ success: true, message: 'Appointment Cancelled' })
-        }
+                if (appointmentData && appointmentData.docId === docId) {
+                        await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
+                        // notify user about cancellation by doctor
+                        try {
+                            await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'Doctor'))
+                        } catch (e) {
+                            console.log('Error sending doctor cancellation email', e)
+                        }
+                        return res.json({ success: true, message: 'Appointment Cancelled' })
+                }
 
-        res.json({ success: false, message: 'Appointment Cancelled' })
+                res.json({ success: false, message: 'Appointment Cancelled' })
 
     } catch (error) {
         console.log(error)
@@ -74,12 +82,18 @@ const appointmentComplete = async (req, res) => {
         const { docId, appointmentId } = req.body
 
         const appointmentData = await appointmentModel.findById(appointmentId)
-        if (appointmentData && appointmentData.docId === docId) {
-            await appointmentModel.findByIdAndUpdate(appointmentId, { isCompleted: true })
-            return res.json({ success: true, message: 'Appointment Completed' })
-        }
+                if (appointmentData && appointmentData.docId === docId) {
+                        await appointmentModel.findByIdAndUpdate(appointmentId, { isCompleted: true })
+                        // send thank you email to user
+                        try {
+                            await sendMail(appointmentData.userData.email, 'Thank you - CareConnect', appointmentCompletedTemplate(appointmentData))
+                        } catch (e) {
+                            console.log('Error sending completion email', e)
+                        }
+                        return res.json({ success: true, message: 'Appointment Completed' })
+                }
 
-        res.json({ success: false, message: 'Appointment Cancelled' })
+                res.json({ success: false, message: 'Appointment Cancelled' })
 
     } catch (error) {
         console.log(error)

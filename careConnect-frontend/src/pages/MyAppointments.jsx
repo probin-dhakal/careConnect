@@ -4,6 +4,7 @@ import { AppContext } from '../context/AppContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { assets } from '../publicAssets/assets.js'
+import LogoutConfirmModal from '../components/LogoutConfirmModal'
 
 const MyAppointments = () => {
 
@@ -12,6 +13,9 @@ const MyAppointments = () => {
 
     const [appointments, setAppointments] = useState([])
     const [payment, setPayment] = useState('')
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [confirmLoading, setConfirmLoading] = useState(false)
+    const [pendingAppointmentId, setPendingAppointmentId] = useState(null)
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -44,15 +48,31 @@ const MyAppointments = () => {
             if (data.success) {
                 toast.success(data.message)
                 getUserAppointments()
+                return true
             } else {
                 toast.error(data.message)
+                return false
             }
 
         } catch (error) {
             console.log(error)
             toast.error(error.message)
+            return false
         }
 
+    }
+
+    const openCancelConfirm = (appointmentId) => {
+        setPendingAppointmentId(appointmentId)
+        setConfirmOpen(true)
+    }
+
+    const handleConfirm = async () => {
+        setConfirmLoading(true)
+        const ok = await cancelAppointment(pendingAppointmentId)
+        setConfirmLoading(false)
+        setConfirmOpen(false)
+        setPendingAppointmentId(null)
     }
 
     const initPay = (order) => {
@@ -149,12 +169,13 @@ const MyAppointments = () => {
 
                             {item.isCompleted && <button className='sm:min-w-48 py-2 border border-green-500 rounded text-green-500'>Completed</button>}
 
-                            {!item.cancelled && !item.isCompleted && <button onClick={() => cancelAppointment(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
+                            {!item.cancelled && !item.isCompleted && <button onClick={() => openCancelConfirm(item._id)} className='text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300'>Cancel appointment</button>}
                             {item.cancelled && !item.isCompleted && <button className='sm:min-w-48 py-2 border border-red-500 rounded text-red-500'>Appointment cancelled</button>}
                         </div>
                     </div>
                 ))}
             </div>
+            <LogoutConfirmModal isOpen={confirmOpen} title={'Cancel Appointment'} message={'Are you sure you want to cancel this appointment?'} onCancel={() => setConfirmOpen(false)} onConfirm={handleConfirm} confirmLabel={'Yes, Cancel'} loading={confirmLoading} />
         </div>
     )
 }

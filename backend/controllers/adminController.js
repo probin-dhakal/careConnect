@@ -5,6 +5,8 @@ import bcrypt from "bcrypt";
 import validator from "validator";
 import { v2 as cloudinary } from "cloudinary";
 import userModel from "../models/userModel.js";
+import { sendMail } from "../config/mailer.js";
+import { appointmentCancelledTemplate } from "../templates/emailTemplates.js";
 
 // API for admin login
 const loginAdmin = async (req, res) => {
@@ -46,9 +48,18 @@ const appointmentCancel = async (req, res) => {
     try {
 
         const { appointmentId } = req.body
-        await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
+                const appointmentData = await appointmentModel.findById(appointmentId)
+                await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
+                // notify user via email
+                try {
+                    if (appointmentData && appointmentData.userData && appointmentData.userData.email) {
+                        await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'Admin'))
+                    }
+                } catch (e) {
+                    console.log('Error sending admin cancellation email', e)
+                }
 
-        res.json({ success: true, message: 'Appointment Cancelled' })
+                res.json({ success: true, message: 'Appointment Cancelled' })
 
     } catch (error) {
         console.log(error)

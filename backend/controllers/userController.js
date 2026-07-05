@@ -4,6 +4,8 @@ import validator from "validator";
 import userModel from "../models/userModel.js";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import { sendMail } from "../config/mailer.js";
+import { appointmentCreatedTemplate, appointmentCancelledTemplate } from "../templates/emailTemplates.js";
 import { v2 as cloudinary } from 'cloudinary'
 import stripe from "stripe";
 import razorpay from 'razorpay';
@@ -180,13 +182,20 @@ const bookAppointment = async (req, res) => {
             date: Date.now()
         }
 
-        const newAppointment = new appointmentModel(appointmentData)
-        await newAppointment.save()
+                const newAppointment = new appointmentModel(appointmentData)
+                await newAppointment.save()
 
-        // save new slots data in docData
-        await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+                // save new slots data in docData
+                await doctorModel.findByIdAndUpdate(docId, { slots_booked })
 
-        res.json({ success: true, message: 'Appointment Booked' })
+                // send confirmation email to user
+                try {
+                    await sendMail(userData.email, 'Appointment Confirmed - CareConnect', appointmentCreatedTemplate(appointmentData))
+                } catch (e) {
+                    console.log('Error sending appointment confirmation email', e)
+                }
+
+                res.json({ success: true, message: 'Appointment Booked' })
 
     } catch (error) {
         console.log(error)
@@ -218,9 +227,16 @@ const cancelAppointment = async (req, res) => {
 
         slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime)
 
-        await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+                await doctorModel.findByIdAndUpdate(docId, { slots_booked })
 
-        res.json({ success: true, message: 'Appointment Cancelled' })
+                // notify user by email about cancellation
+                try {
+                    await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'You'))
+                } catch (e) {
+                    console.log('Error sending cancellation email', e)
+                }
+
+                res.json({ success: true, message: 'Appointment Cancelled' })
 
     } catch (error) {
         console.log(error)

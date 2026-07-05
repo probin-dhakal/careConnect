@@ -1,13 +1,17 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { assets } from '../../dashboardAssets/assets.js'
 import { useContext } from 'react'
 import { AdminContext } from '../../context/AdminContext'
 import { AppContext } from '../../context/AppContext'
+import LogoutConfirmModal from '../../components/LogoutConfirmModal'
 
 const AllAppointments = () => {
 
   const { aToken, appointments, cancelAppointment, getAllAppointments } = useContext(AdminContext)
   const { slotDateFormat, calculateAge, currency } = useContext(AppContext)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmLoading, setConfirmLoading] = useState(false)
+  const [pendingAppointmentId, setPendingAppointmentId] = useState(null)
 
   useEffect(() => {
     if (aToken) {
@@ -30,7 +34,7 @@ const AllAppointments = () => {
           <p>Fees</p>
           <p>Action</p>
         </div>
-        {appointments.map((item, index) => (
+            {appointments.map((item, index) => (
           <div className='flex flex-wrap justify-between max-sm:gap-2 sm:grid sm:grid-cols-[0.5fr_3fr_1fr_3fr_3fr_1fr_1fr] items-center text-gray-500 py-3 px-6 border-b hover:bg-gray-50' key={index}>
             <p className='max-sm:hidden'>{index+1}</p>
             <div className='flex items-center gap-2'>
@@ -42,10 +46,18 @@ const AllAppointments = () => {
               <img src={item.docData.image} className='w-8 rounded-full bg-gray-200' alt="" /> <p>{item.docData.name}</p>
             </div>
             <p>{currency}{item.amount}</p>
-            {item.cancelled ? <p className='text-red-400 text-xs font-medium'>Cancelled</p> : item.isCompleted ? <p className='text-green-500 text-xs font-medium'>Completed</p> : <img onClick={() => cancelAppointment(item._id)} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />}
+            {item.cancelled ? <p className='text-red-400 text-xs font-medium'>Cancelled</p> : item.isCompleted ? <p className='text-green-500 text-xs font-medium'>Completed</p> : <img onClick={() => { setPendingAppointmentId(item._id); setConfirmOpen(true) }} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />}
           </div>
         ))}
       </div>
+
+      <LogoutConfirmModal isOpen={confirmOpen} title={'Cancel Appointment'} message={'Are you sure you want to cancel this appointment?'} onCancel={() => setConfirmOpen(false)} onConfirm={async()=>{
+        setConfirmLoading(true)
+        await cancelAppointment(pendingAppointmentId)
+        setConfirmLoading(false)
+        setConfirmOpen(false)
+        setPendingAppointmentId(null)
+      }} confirmLabel={'Yes, Cancel'} loading={confirmLoading} />
 
     </div>
   )
