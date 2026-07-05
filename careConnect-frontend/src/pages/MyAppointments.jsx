@@ -76,6 +76,16 @@ const MyAppointments = () => {
     }
 
     const initPay = (order) => {
+        if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+            toast.error('Razorpay key is missing in frontend .env')
+            return
+        }
+
+        if (!window.Razorpay) {
+            toast.error('Razorpay SDK failed to load. Please refresh and try again.')
+            return
+        }
+
         const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: order.amount,
