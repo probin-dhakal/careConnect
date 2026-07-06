@@ -13,7 +13,7 @@ const authAdmin = async (req, res, next) => {
         }
         next()
     } catch (error) {
-        console.log(error)
+        console.error("Error in authAdmin middleware:", error)
         res.json({ success: false, message: error.message })
     }
 }

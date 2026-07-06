@@ -22,7 +22,7 @@ const loginAdmin = async (req, res) => {
         }
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in loginAdmin:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -37,7 +37,7 @@ const appointmentsAdmin = async (req, res) => {
         res.json({ success: true, appointments })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in appointmentsAdmin:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -56,13 +56,13 @@ const appointmentCancel = async (req, res) => {
                         await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'Admin'))
                     }
                 } catch (e) {
-                    console.log('Error sending admin cancellation email', e)
+                    console.error("Error sending admin cancellation email:", e)
                 }
 
                 res.json({ success: true, message: 'Appointment Cancelled' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in appointmentCancel:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -123,7 +123,7 @@ const addDoctor = async (req, res) => {
         res.json({ success: true, message: 'Doctor Added' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in addDoctor:", error)
         if (error.code === 11000) {
             return res.json({ success: false, message: 'Doctor already exists' })
         }
@@ -139,7 +139,7 @@ const allDoctors = async (req, res) => {
         res.json({ success: true, doctors })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in allDoctors:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -155,7 +155,7 @@ const deleteDoctor = async (req, res) => {
         res.json({ success: true, message: 'Doctor deleted' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in deleteDoctor:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -178,7 +178,7 @@ const adminDashboard = async (req, res) => {
         res.json({ success: true, dashData })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in adminDashboard:", error)
         res.json({ success: false, message: error.message })
     }
 }

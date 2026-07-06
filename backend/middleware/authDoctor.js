@@ -11,7 +11,7 @@ const authDoctor = async (req, res, next) => {
         req.body.docId = token_decode.id
         next()
     } catch (error) {
-        console.log(error)
+        console.error("Error in authDoctor middleware:", error)
         res.json({ success: false, message: error.message })
     }
 }

@@ -28,7 +28,7 @@ const loginDoctor = async (req, res) => {
 
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in loginDoctor:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -43,7 +43,7 @@ const appointmentsDoctor = async (req, res) => {
         res.json({ success: true, appointments })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in appointmentsDoctor:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -61,7 +61,7 @@ const appointmentCancel = async (req, res) => {
                         try {
                             await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'Doctor'))
                         } catch (e) {
-                            console.log('Error sending doctor cancellation email', e)
+                            console.error("Error sending doctor cancellation email:", e)
                         }
                         return res.json({ success: true, message: 'Appointment Cancelled' })
                 }
@@ -69,7 +69,7 @@ const appointmentCancel = async (req, res) => {
                 res.json({ success: false, message: 'Appointment Cancelled' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in appointmentCancel:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -88,7 +88,7 @@ const appointmentComplete = async (req, res) => {
                         try {
                             await sendMail(appointmentData.userData.email, 'Thank you - CareConnect', appointmentCompletedTemplate(appointmentData))
                         } catch (e) {
-                            console.log('Error sending completion email', e)
+                            console.error("Error sending doctor completion email:", e)
                         }
                         return res.json({ success: true, message: 'Appointment Completed' })
                 }
@@ -96,7 +96,7 @@ const appointmentComplete = async (req, res) => {
                 res.json({ success: false, message: 'Appointment Cancelled' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in appointmentComplete:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -110,7 +110,7 @@ const doctorList = async (req, res) => {
         res.json({ success: true, doctors })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in doctorList:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -127,7 +127,7 @@ const changeAvailablity = async (req, res) => {
         res.json({ success: true, message: 'Availablity Changed' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in changeAvailablity:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -142,7 +142,7 @@ const doctorProfile = async (req, res) => {
         res.json({ success: true, profileData })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in doctorProfile:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -158,7 +158,7 @@ const updateDoctorProfile = async (req, res) => {
         res.json({ success: true, message: 'Profile Updated' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in updateDoctorProfile:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -199,7 +199,7 @@ const doctorDashboard = async (req, res) => {
         res.json({ success: true, dashData })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in doctorDashboard:", error)
         res.json({ success: false, message: error.message })
     }
 }

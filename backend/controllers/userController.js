@@ -58,7 +58,7 @@ const registerUser = async (req, res) => {
         res.json({ success: true, token })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in registerUser:", error)
         if (error.code === 11000) {
             return res.json({ success: false, message: 'User already exists' })
         }
@@ -87,7 +87,7 @@ const loginUser = async (req, res) => {
             res.json({ success: false, message: "Invalid credentials" })
         }
     } catch (error) {
-        console.log(error)
+        console.error("Error in loginUser:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -102,7 +102,7 @@ const getProfile = async (req, res) => {
         res.json({ success: true, userData })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in getProfile:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -133,7 +133,7 @@ const updateProfile = async (req, res) => {
         res.json({ success: true, message: 'Profile Updated' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in updateProfile:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -190,13 +190,13 @@ const bookAppointment = async (req, res) => {
                 try {
                     await sendMail(userData.email, 'Appointment Confirmed - CareConnect', appointmentCreatedTemplate(appointmentData))
                 } catch (e) {
-                    console.log('Error sending appointment confirmation email', e)
+                    console.error("Error sending appointment confirmation email:", e)
                 }
 
                 res.json({ success: true, message: 'Appointment Booked' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in bookAppointment:", error)
         res.json({ success: false, message: error.message })
     }
 
@@ -231,13 +231,13 @@ const cancelAppointment = async (req, res) => {
                 try {
                     await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'You'))
                 } catch (e) {
-                    console.log('Error sending cancellation email', e)
+                    console.error("Error sending cancellation email:", e)
                 }
 
                 res.json({ success: true, message: 'Appointment Cancelled' })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in cancelAppointment:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -252,7 +252,7 @@ const listAppointment = async (req, res) => {
         res.json({ success: true, appointments })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in listAppointment:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -281,7 +281,7 @@ const paymentRazorpay = async (req, res) => {
         res.json({ success: true, order })
 
     } catch (error) {
-        console.log(error)
+        console.error("Error in paymentRazorpay:", error)
         res.json({ success: false, message: error.message })
     }
 }
@@ -300,7 +300,7 @@ const verifyRazorpay = async (req, res) => {
             res.json({ success: false, message: 'Payment Failed' })
         }
     } catch (error) {
-        console.log(error)
+        console.error("Error in verifyRazorpay:", error)
         res.json({ success: false, message: error.message })
     }
 }
