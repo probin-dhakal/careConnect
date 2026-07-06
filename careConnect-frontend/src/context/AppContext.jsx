@@ -36,41 +36,30 @@ const AppContextProvider = (props) => {
 
     // Getting Doctors using API
     const getDoctosData = async () => {
-
         try {
-
             const { data } = await axios.get(backendUrl + '/api/doctor/list')
             if (data.success) {
                 setDoctors(data.doctors)
             } else {
                 toast.error(data.message)
             }
-
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
-
     }
 
     // Getting User Profile using API
     const loadUserProfileData = async () => {
-
         try {
-
             const { data } = await axios.get(backendUrl + '/api/user/get-profile', { headers: { token } })
-
             if (data.success) {
                 setUserData(data.userData)
             } else {
                 toast.error(data.message)
             }
-
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
-
     }
 
     useEffect(() => {

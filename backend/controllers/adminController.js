@@ -46,33 +46,25 @@ const appointmentsAdmin = async (req, res) => {
 // API for appointment cancellation
 const appointmentCancel = async (req, res) => {
     try {
-
         const { appointmentId } = req.body
-                const appointmentData = await appointmentModel.findById(appointmentId)
-                await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
-                // notify user via email
-                try {
-                    if (appointmentData && appointmentData.userData && appointmentData.userData.email) {
-                        await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'Admin'))
-                    }
-                } catch (e) {
-                    console.error("Error sending admin cancellation email:", e)
-                }
+        const appointmentData = await appointmentModel.findById(appointmentId)
+        await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
 
-                res.json({ success: true, message: 'Appointment Cancelled' })
+        if (appointmentData && appointmentData.userData && appointmentData.userData.email) {
+            sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'Admin'))
+                .catch(e => console.error("Error sending admin cancellation email:", e));
+        }
 
+        res.json({ success: true, message: 'Appointment Cancelled' })
     } catch (error) {
         console.error("Error in appointmentCancel:", error)
         res.json({ success: false, message: error.message })
     }
-
 }
 
 // API for adding Doctor
 const addDoctor = async (req, res) => {
-
     try {
-
         const { name, email, password, speciality, degree, experience, about, fees, address } = req.body
         const imageFile = req.file
 
@@ -92,7 +84,7 @@ const addDoctor = async (req, res) => {
         }
 
         // hashing user password
-        const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
+        const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt)
 
         const existingDoctor = await doctorModel.findOne({ email })
@@ -134,10 +126,8 @@ const addDoctor = async (req, res) => {
 // API to get all doctors list for admin panel
 const allDoctors = async (req, res) => {
     try {
-
         const doctors = await doctorModel.find({}).select('-password')
         res.json({ success: true, doctors })
-
     } catch (error) {
         console.error("Error in allDoctors:", error)
         res.json({ success: false, message: error.message })
@@ -153,7 +143,6 @@ const deleteDoctor = async (req, res) => {
         await doctorModel.findByIdAndDelete(doctorId)
 
         res.json({ success: true, message: 'Doctor deleted' })
-
     } catch (error) {
         console.error("Error in deleteDoctor:", error)
         res.json({ success: false, message: error.message })
@@ -163,7 +152,6 @@ const deleteDoctor = async (req, res) => {
 // API to get dashboard data for admin panel
 const adminDashboard = async (req, res) => {
     try {
-
         const doctors = await doctorModel.find({})
         const users = await userModel.find({})
         const appointments = await appointmentModel.find({})
@@ -176,7 +164,6 @@ const adminDashboard = async (req, res) => {
         }
 
         res.json({ success: true, dashData })
-
     } catch (error) {
         console.error("Error in adminDashboard:", error)
         res.json({ success: false, message: error.message })

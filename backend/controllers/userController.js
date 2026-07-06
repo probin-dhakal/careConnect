@@ -17,31 +17,37 @@ const razorpayInstance = new razorpay({
 
 // API to register user
 const registerUser = async (req, res) => {
-
+    console.log(`[USER-REGISTRATION] Initiating registration request for email: ${req.body.email}`);
+    const startTime = Date.now();
     try {
         const { name, email, password } = req.body;
 
         // checking for all data to register user
         if (!name || !email || !password) {
+            console.log(`[USER-REGISTRATION] Failed: Missing required details.`);
             return res.json({ success: false, message: 'Missing Details' })
         }
 
         // validating email format
         if (!validator.isEmail(email)) {
+            console.log(`[USER-REGISTRATION] Failed: Invalid email format ${email}.`);
             return res.json({ success: false, message: "Please enter a valid email" })
         }
 
         // validating strong password
         if (password.length < 8) {
+            console.log(`[USER-REGISTRATION] Failed: Password length too short (< 8 chars).`);
             return res.json({ success: false, message: "Please enter a strong password" })
         }
 
-        // hashing user password
-        const salt = await bcrypt.genSalt(10); // the more no. round the more time it will take
+        console.log(`[USER-REGISTRATION] Hashing password...`);
+        const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt)
 
+        console.log(`[USER-REGISTRATION] Checking if email is already taken in DB...`);
         const existingUser = await userModel.findOne({ email })
         if (existingUser) {
+            console.log(`[USER-REGISTRATION] Failed: User already exists.`);
             return res.json({ success: false, message: 'User already exists' })
         }
 
@@ -51,14 +57,18 @@ const registerUser = async (req, res) => {
             password: hashedPassword,
         }
 
+        console.log(`[USER-REGISTRATION] Saving new user record in DB...`);
         const newUser = new userModel(userData)
         const user = await newUser.save()
+
+        console.log(`[USER-REGISTRATION] Generating JWT token...`);
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
 
+        console.log(`[USER-REGISTRATION] Completed successfully in ${Date.now() - startTime}ms`);
         res.json({ success: true, token })
 
     } catch (error) {
-        console.error("Error in registerUser:", error)
+        console.error(`[USER-REGISTRATION] Error in registerUser after ${Date.now() - startTime}ms:`, error)
         if (error.code === 11000) {
             return res.json({ success: false, message: 'User already exists' })
         }
@@ -68,81 +78,89 @@ const registerUser = async (req, res) => {
 
 // API to login user
 const loginUser = async (req, res) => {
-
+    const { email, password } = req.body;
+    console.log(`[USER-LOGIN] Initiating login request for email: ${email}`);
+    const startTime = Date.now();
     try {
-        const { email, password } = req.body;
+        console.log(`[USER-LOGIN] Querying user record by email...`);
         const user = await userModel.findOne({ email })
 
         if (!user) {
+            console.log(`[USER-LOGIN] Login failed: User not found.`);
             return res.json({ success: false, message: "User does not exist" })
         }
 
+        console.log(`[USER-LOGIN] User found. Verifying password hash...`);
         const isMatch = await bcrypt.compare(password, user.password)
 
         if (isMatch) {
+            console.log(`[USER-LOGIN] Password matches. Generating JWT token...`);
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+            console.log(`[USER-LOGIN] Login completed successfully in ${Date.now() - startTime}ms`);
             res.json({ success: true, token })
         }
         else {
+            console.log(`[USER-LOGIN] Login failed: Incorrect password.`);
             res.json({ success: false, message: "Invalid credentials" })
         }
     } catch (error) {
-        console.error("Error in loginUser:", error)
+        console.error(`[USER-LOGIN] Error in loginUser after ${Date.now() - startTime}ms:`, error)
         res.json({ success: false, message: error.message })
     }
 }
 
 // API to get user profile data
 const getProfile = async (req, res) => {
-
+    const { userId } = req.body
+    console.log(`[USER-PROFILE] Fetching profile information for user: ${userId}`);
+    const startTime = Date.now();
     try {
-        const { userId } = req.body
         const userData = await userModel.findById(userId).select('-password')
-
+        console.log(`[USER-PROFILE] Profile retrieved in ${Date.now() - startTime}ms`);
         res.json({ success: true, userData })
-
     } catch (error) {
-        console.error("Error in getProfile:", error)
+        console.error(`[USER-PROFILE] Error in getProfile after ${Date.now() - startTime}ms:`, error)
         res.json({ success: false, message: error.message })
     }
 }
 
 // API to update user profile
 const updateProfile = async (req, res) => {
+    const { userId, name, phone, address, dob, gender } = req.body
+    const imageFile = req.file
+    console.log(`[USER-PROFILE-UPDATE] Initiating profile update for user: ${userId}`);
+    const startTime = Date.now();
 
     try {
-
-        const { userId, name, phone, address, dob, gender } = req.body
-        const imageFile = req.file
-
         if (!name || !phone || !dob || !gender) {
+            console.warn(`[USER-PROFILE-UPDATE] Failed: Missing required user parameters.`);
             return res.json({ success: false, message: "Data Missing" })
         }
 
+        console.log(`[USER-PROFILE-UPDATE] Saving profile text fields in DB...`);
         await userModel.findByIdAndUpdate(userId, { name, phone, address: JSON.parse(address), dob, gender })
 
         if (imageFile) {
-
-            // upload image to cloudinary
+            console.log(`[USER-PROFILE-UPDATE] Uploading profile picture to Cloudinary...`);
             const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
             const imageURL = imageUpload.secure_url
+            console.log(`[USER-PROFILE-UPDATE] Image upload successful. URL: ${imageURL}`);
 
             await userModel.findByIdAndUpdate(userId, { image: imageURL })
         }
 
+        console.log(`[USER-PROFILE-UPDATE] Profile successfully updated in ${Date.now() - startTime}ms`);
         res.json({ success: true, message: 'Profile Updated' })
 
     } catch (error) {
-        console.error("Error in updateProfile:", error)
+        console.error(`[USER-PROFILE-UPDATE] Error in updateProfile after ${Date.now() - startTime}ms:`, error)
         res.json({ success: false, message: error.message })
     }
 }
 
 // API to book appointment 
 const bookAppointment = async (req, res) => {
-
     try {
-
         const { userId, docId, slotDate, slotTime } = req.body
         const docData = await doctorModel.findById(docId).select("-password")
 
@@ -180,32 +198,26 @@ const bookAppointment = async (req, res) => {
             date: Date.now()
         }
 
-                const newAppointment = new appointmentModel(appointmentData)
-                await newAppointment.save()
+        const newAppointment = new appointmentModel(appointmentData)
+        await newAppointment.save()
 
-                // save new slots data in docData
-                await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+        // save new slots data in docData
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked })
 
-                // send confirmation email to user
-                try {
-                    await sendMail(userData.email, 'Appointment Confirmed - CareConnect', appointmentCreatedTemplate(appointmentData))
-                } catch (e) {
-                    console.error("Error sending appointment confirmation email:", e)
-                }
+        // send confirmation email to user asynchronously (non-blocking)
+        sendMail(userData.email, 'Appointment Confirmed - CareConnect', appointmentCreatedTemplate(appointmentData))
+            .catch(e => console.error("Error sending appointment email:", e));
 
-                res.json({ success: true, message: 'Appointment Booked' })
-
+        res.json({ success: true, message: 'Appointment Booked' })
     } catch (error) {
         console.error("Error in bookAppointment:", error)
         res.json({ success: false, message: error.message })
     }
-
 }
 
 // API to cancel appointment
 const cancelAppointment = async (req, res) => {
     try {
-
         const { userId, appointmentId } = req.body
         const appointmentData = await appointmentModel.findById(appointmentId)
 
@@ -225,17 +237,13 @@ const cancelAppointment = async (req, res) => {
 
         slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime)
 
-                await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked })
 
-                // notify user by email about cancellation
-                try {
-                    await sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'You'))
-                } catch (e) {
-                    console.error("Error sending cancellation email:", e)
-                }
+        // notify user by email about cancellation asynchronously (non-blocking)
+        sendMail(appointmentData.userData.email, 'Appointment Cancelled - CareConnect', appointmentCancelledTemplate(appointmentData, 'You'))
+            .catch(e => console.error("Error sending cancellation email:", e));
 
-                res.json({ success: true, message: 'Appointment Cancelled' })
-
+        res.json({ success: true, message: 'Appointment Cancelled' })
     } catch (error) {
         console.error("Error in cancelAppointment:", error)
         res.json({ success: false, message: error.message })
@@ -245,12 +253,9 @@ const cancelAppointment = async (req, res) => {
 // API to get user appointments for frontend my-appointments page
 const listAppointment = async (req, res) => {
     try {
-
         const { userId } = req.body
         const appointments = await appointmentModel.find({ userId })
-
         res.json({ success: true, appointments })
-
     } catch (error) {
         console.error("Error in listAppointment:", error)
         res.json({ success: false, message: error.message })
@@ -260,7 +265,6 @@ const listAppointment = async (req, res) => {
 // API to make payment of appointment using razorpay
 const paymentRazorpay = async (req, res) => {
     try {
-
         const { appointmentId } = req.body
         const appointmentData = await appointmentModel.findById(appointmentId)
 
@@ -275,11 +279,8 @@ const paymentRazorpay = async (req, res) => {
             receipt: appointmentId,
         }
 
-        // creation of an order
         const order = await razorpayInstance.orders.create(options)
-
         res.json({ success: true, order })
-
     } catch (error) {
         console.error("Error in paymentRazorpay:", error)
         res.json({ success: false, message: error.message })

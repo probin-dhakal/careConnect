@@ -1,24 +1,36 @@
-import nodemailer from 'nodemailer'
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
-
 export const sendMail = async (to, subject, html) => {
-  const from = process.env.MAIL_FROM || process.env.SMTP_USER
-  const info = await transporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-  })
-  return info
+  const from = process.env.MAIL_FROM || 'onboarding@resend.dev'
+  const apiKey = process.env.RESEND_API_KEY
+
+  if (!apiKey || apiKey === 're_your_api_key_here') {
+    return { success: false, message: 'Skipped due to missing key' };
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        html,
+      }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || `Resend API returned status ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error sending email via Resend API:", error);
+    throw error;
+  }
 }
 
 export default sendMail

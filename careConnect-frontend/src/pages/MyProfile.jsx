@@ -14,11 +14,8 @@ const MyProfile = () => {
 
     // Function to update user profile data using API
     const updateUserProfileData = async () => {
-
         try {
-
             const formData = new FormData();
-
             formData.append('name', userData.name)
             formData.append('phone', userData.phone)
             formData.append('address', JSON.stringify(userData.address))
@@ -39,10 +36,8 @@ const MyProfile = () => {
             }
 
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
-
     }
 
     return userData ? (

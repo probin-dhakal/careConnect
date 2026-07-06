@@ -28,21 +28,20 @@ const MyAppointments = () => {
     // Getting User Appointments Data Using API
     const getUserAppointments = async () => {
         try {
-
             const { data } = await axios.get(backendUrl + '/api/user/appointments', { headers: { token } })
-            setAppointments(data.appointments.reverse())
-
+            if (data.success) {
+                setAppointments(data.appointments.reverse())
+            } else {
+                toast.error(data.message)
+            }
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
     }
 
     // Function to cancel appointment Using API
     const cancelAppointment = async (appointmentId) => {
-
         try {
-
             const { data } = await axios.post(backendUrl + '/api/user/cancel-appointment', { appointmentId }, { headers: { token } })
 
             if (data.success) {
@@ -53,13 +52,10 @@ const MyAppointments = () => {
                 toast.error(data.message)
                 return false
             }
-
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
             return false
         }
-
     }
 
     const openCancelConfirm = (appointmentId) => {
@@ -95,17 +91,16 @@ const MyAppointments = () => {
             order_id: order.id,
             receipt: order.receipt,
             handler: async (response) => {
-
-                console.log(response)
-
                 try {
                     const { data } = await axios.post(backendUrl + "/api/user/verifyRazorpay", response, { headers: { token } });
                     if (data.success) {
+                        toast.success(data.message)
                         navigate('/my-appointments')
                         getUserAppointments()
+                    } else {
+                        toast.error(data.message)
                     }
                 } catch (error) {
-                    console.log(error)
                     toast.error(error.message)
                 }
             }
@@ -120,11 +115,10 @@ const MyAppointments = () => {
             const { data } = await axios.post(backendUrl + '/api/user/payment-razorpay', { appointmentId }, { headers: { token } })
             if (data.success) {
                 initPay(data.order)
-            }else{
+            } else {
                 toast.error(data.message)
             }
         } catch (error) {
-            console.log(error)
             toast.error(error.message)
         }
     }
